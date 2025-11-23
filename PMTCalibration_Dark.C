@@ -1,6 +1,3 @@
-
-
-
 void PMTCalib_Create_DarkCounts_Root(const char* directory, double threshold_mV = 8.) {
 
     TSystemDirectory dir(directory, directory);
