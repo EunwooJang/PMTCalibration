@@ -1,6 +1,3 @@
-R__LOAD_LIBRARY(build/libRawObjs.dylib)
-
-
 TChain *g_t;
 FChannelData *g_data;
 Long64_t g_nentries;
