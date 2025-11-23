@@ -1,6 +1,3 @@
-
-
-
 void PMTCalib_Calculate_SPE_Voltage_Height(int gain = 1e+7, 
                    int resistence_ohm = 50,
                    float pulse_width_ns = 20
