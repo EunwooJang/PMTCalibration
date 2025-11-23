@@ -1,6 +1,3 @@
-
-
-
 void PMTCalib_Draw_Max_Amplitude_Histogram(const char* file = "dir_root/test.root",
                  int channel = 0,
                  double pedestal_t_ns = 500,
