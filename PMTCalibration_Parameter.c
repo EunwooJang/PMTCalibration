@@ -1,4 +1,3 @@
-
 // Voltage - 2.5V pp & 12 bits resolution
 double Vpp_mV = 2500.;
 double bit_resolution = 12.;
