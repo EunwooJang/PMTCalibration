@@ -1,5 +1,3 @@
-
-
 void PMTCalib_Print_Single_Event_Info(const char* file, int event = 0) {
   
   TChain *t = new TChain("AbsEvent");
