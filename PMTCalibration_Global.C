@@ -1,4 +1,4 @@
-R__LOAD_LIBRARY(build/libRawObjs.dylib)
+R__LOAD_LIBRARY(RawObjs/build/libRawObjs.so)
 
 char* PMTCalib_Find_Dir_Name(const char* keywords_str) {
 
