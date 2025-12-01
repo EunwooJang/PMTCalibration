@@ -15,23 +15,34 @@ void PMTCalib_Calculate_SPE_Voltage_Height(int gain = 1e+7,
 
 void PMTCalib_Draw_Charge_Histogram(const char* file = "dir_root/test.root",
                  int channel = 0,
-                 int pedestal_t_ns = 500.,
+                 double pedestal_t_ns_start = 0.,
+                 double pedestal_t_ns_end = 500.,
+                 double pedestal_min_threshold_mV = -3,
+                 double pedestal_max_threshold_mV = 4,
                  double signal_peak_search_start_ns = 580.,
                  double signal_peak_search_end_ns = 660.,
                  double signal_integral_start_ns = 4.,
                  double signal_integral_end_ns = 16.,
-                 double threshold_mV = 8.){
+                 double threshold_mV = 8.,
+                 double x_draw_min_pC = -2,
+                 double x_draw_max_pC = 12,
+                 int log = 1){
 
 
     PMTCalib_Delete_Canvas();
 
-    int pedestal_x_max = std::ceil(pedestal_t_ns / time_scale_ns);
+    int pedestal_x_min = std::ceil(pedestal_t_ns_start / time_scale_ns);
+    int pedestal_x_max = std::ceil(pedestal_t_ns_end / time_scale_ns);
+    
+    int threshold_min = std::floor(pedestal_min_threshold_mV / amplitude_scale_mV);
+    int threshold_max = std::ceil(pedestal_max_threshold_mV / amplitude_scale_mV);
+    
     int signal_peak_search_x_min = std::ceil(signal_peak_search_start_ns / time_scale_ns);
     int signal_peak_search_x_max = std::ceil(signal_peak_search_end_ns / time_scale_ns);
     int signal_integral_x_min = std::ceil(signal_integral_start_ns / time_scale_ns);
     int signal_integral_x_max = std::ceil(signal_integral_end_ns / time_scale_ns);
     int threshold = std::ceil(threshold_mV / amplitude_scale_mV);
-
+    
 
     TFile *f = TFile::Open(file);
     TTree *tree = (TTree*)f->Get("AbsEvent");
@@ -59,12 +70,23 @@ void PMTCalib_Draw_Charge_Histogram(const char* file = "dir_root/test.root",
 
         if (ndp <= 0 || !waveform) continue;
 
+        int avoid = 0;
+
+        for (int j = pedestal_x_min; j < pedestal_x_max && j < ndp; ++j) {
+            float height = (float)(waveform[j]) - (float)pedestal;
+            if ((height > threshold_max) || (height < threshold_min)) { 
+                avoid = 1;
+            }
+        }
+
+        if (avoid) continue;
+
         float pedestal_avg_adc = 0;
         int pedestal_count = 0;
 
-        if (pedestal_x_max > -1) {
+        if (pedestal_x_max > 0) {
 
-            for (int j = 0; j < pedestal_x_max && j < ndp; ++j) {
+            for (int j = pedestal_x_min; j < pedestal_x_max && j < ndp; ++j) {
                 pedestal_avg_adc += (float)(waveform[j]) - pedestal;
                 pedestal_count++;
             }
@@ -101,34 +123,53 @@ void PMTCalib_Draw_Charge_Histogram(const char* file = "dir_root/test.root",
         }
 
         charge *= factor;
+        if ((charge < x_draw_min_pC) || (charge > x_draw_max_pC)){
+            cout << i << endl;
+        }
         charge_list.push_back(charge);
     }
 
 
     gStyle->SetOptStat(10);
-
+    gStyle->SetOptFit(1111);
+    gStyle->SetStatX(0.9);
+    gStyle->SetStatY(0.9);
+    gStyle->SetStatW(0.2);
+    gStyle->SetStatH(0.4);
+    
     TCanvas *can = new TCanvas("can",
                                Form("Channel %d - Charge Histogram", channel),
                                1200, 600);
 
-    double min_charge = *std::min_element(charge_list.begin(), charge_list.end());
-    double max_charge = *std::max_element(charge_list.begin(), charge_list.end());
 
-    int min_val = (int)std::floor(min_charge / factor) - 1;
-    int max_val = (int)std::ceil(max_charge / factor) + 1;
+    int min_val = (int)std::floor(x_draw_min_pC / factor) - 1;
+    int max_val = (int)std::ceil(x_draw_max_pC / factor) + 1;
     int range = max_val - min_val;
-
+    
     TH1D *h = new TH1D("h",
                           Form("Channel %d - Charge Histogram;Charge (pC);Counts", channel),
                           range, min_val * factor, max_val * factor); 
     for (double charge : charge_list) {
         h->Fill(charge);
     }
+    
+    if (log == 1) {
+        h->GetYaxis()->SetRangeUser(1e-1, 1e+5);
+        can->SetLogy();
+    }
+
+    if (log == 2) {
+        h->GetYaxis()->SetTitle("Probability Density");
+        h->Scale(1.0 / h->Integral("width"));
+        h->GetYaxis()->SetRangeUser(1e-5, 10);
+        can->SetLogy();
+    }
+
 
     h->SetLineWidth(2);
     h->SetLineColor(kBlue);
-    h->Draw();
-    can->SetLogy();
+    h->Draw("HIST");
+
     can->Update();
 
     cout << "\n========================================" << endl;

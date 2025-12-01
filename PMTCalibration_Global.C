@@ -40,7 +40,7 @@ char* PMTCalib_Find_File_Name(const char* keywords_str, int Run_Id = 0) {
         struct dirent* subentry;
 
         while ((subentry = readdir(subdir)) != NULL) {
-          if (subentry->d_type == DT_REG && strstr(subentry->d_name, "RUN_") == subentry->d_name) {
+          if (subentry->d_type == DT_REG && strstr(subentry->d_name, "RUN") == subentry->d_name) {
             char* dot = strchr(subentry->d_name, '.');
             if (dot != NULL) {
               char* last_dot = strrchr(subentry->d_name, '.');
